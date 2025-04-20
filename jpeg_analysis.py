@@ -3,9 +3,11 @@ import glob
 import exifread
 from matplotlib import pyplot, font_manager
 import matplotlib_fontja
+import numpy as np
+import sys
 
 
-def read_exif(source_path):
+def generate(source_path):
     # 指定フォルダ内の画像を読み込む
     picture_info_list = []
     file_path_list = glob.glob(source_path + "\\*.JPG", recursive=True)
@@ -26,17 +28,27 @@ def read_exif(source_path):
     
     
     # 画像生成
-    flg = pyplot.figure()
-    ax = flg.add_subplot()
+    flg, ax = pyplot.subplots()
 
     fnumber_extractor = lambda x: x["EXIF FNumber"]
     f_numbers = [fnumber_extractor(info) for info in picture_info_list]
-    x_labels = list(set(f_numbers)).sort()
-    ax.plot(x=x_labels, y=f_numbers, marker='o', linestyle='-', label="f値")
-    ax.legend()
+    x_labels = list(set(f_numbers))
+    print(x_labels)
+    print(f_numbers)
+
+
+    bottom = np.zeros(len(x_labels))
+    ax.set_xticks(x_labels)
+    ax.set_yticks([i for i in range(0, 20)])
+    for val in f_numbers:
+        p = ax.bar(val, val,)
+        bottom += 1
+    # ax.bar(x_labels, f_numbers, label="f値")
+    # ax.legend()
     # ax.plot()
     flg.savefig("test.png")
 
 
 if __name__ == "__main__":
-    read_exif("C:\\Users\\halo1\\Downloads\\しまうまプリント用")
+    generate(sys.argv[1])
+    # generate("C:\\Users\\halo1\\Downloads\\しまうまプリント用")
