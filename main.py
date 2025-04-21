@@ -26,27 +26,51 @@ class Main:
             return
 
         # 指定フォルダ内の画像を読み込む
-        picture_info_list = self.read_image_in_folder(argv[1])
+        image_file_list = self.get_image_files_path(argv[1])
+        # pprint(str(image_file_list[0]))
         # print(len(picture_info_list))
-    
-    def read_image_in_folder(self, source_path: str) -> list[dict]:
+        # pprint(image_file_list)
+        self.read_exif_data(image_file_list)
+
+    def get_image_files_path(self, source_path: str) -> list[pathlib.Path]:
         """
-        指定フォルダ内の画像を読み込むメソッド
+        指定フォルダ内の画像ファイルパスを取得するメソッド
         Args:
             source_path: 画像フォルダパス
         Returns:
-            list[dict]: 画像情報リスト
+            list: 画像ファイルパスリスト
+        """
+        # pathlib_path =
+
+        # # TODO 絶対パスに変換する必要ある？
+        pathlib_path = pathlib.Path(source_path).resolve()
+
+        # TODO exif情報を持ってないjpgファイルも想定する
+        # TODO 拡張子がjpegのファイルも想定する
+
+        # 画像ファイルリストを取得（再帰的）
+        # return list(pathlib.Path(pathlib_path).rglob("*.JPG"))
+        return list(pathlib_path.rglob("*.JPG"))
+
+    def read_exif_data(self, file_path_list: list[pathlib.Path]):
+        """
+        指定フォルダ内の画像を読み込むメソッド
+        Args:
+            file_path_list: 画像ファイルパスリスト
+        Returns:
+            dict: EXIFデータ
         """
         picture_info_list = []
-        pathlib_path = pathlib.Path(source_path)
+        for file_path in file_path_list:
+            with open(file_path, "rb") as file:
+                picture_info = {}
+                tags = exifread.process_file(file, details=False)
+                for tag, value in tags.items():
+                    if tag.startswith("Image ") or tag.startswith("EXIF "):
+                        picture_info[tag] = value
+                picture_info_list.append(picture_info)
 
-        # TODO 絶対パスに変換する必要ある？
-        pathlib_path = pathlib_path.resolve()
-
-        pprint(list(pathlib_path.rglob("*.JPG")))
-
-
-
+        return picture_info_list
 
     def validate_input_path(self, argv: list[str]) -> bool:
         """
