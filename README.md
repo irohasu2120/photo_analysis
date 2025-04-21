@@ -21,7 +21,7 @@
   - 生成コマンド
     - `python main.py "{解析対象フォルダ}"`
   - 生成コマンドサンプル
-    - `python main.py "C:\\sample\\picture_dir"`
+    - `python main.py "C:\\sample\\photograph_dir"`
   - 出力先
     - `.\out`
 

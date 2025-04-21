@@ -1,3 +1,4 @@
+from fractions import Fraction
 import pathlib
 from pprint import pprint
 import exifread
@@ -28,6 +29,7 @@ class Main:
         image_file_list = self.get_image_files_path(argv[1])
         image_exif_list = self.read_exif_data(image_file_list)
 
+        # PDF生成
         generate_pdf = GeneratePDF()
         generate_pdf.generate(image_exif_list)
         # pprint(image_exif_list)
@@ -58,14 +60,21 @@ class Main:
         # TODO exif情報を持ってないjpgファイルも想定する
         picture_info_list = []
         for file_path in file_path_list:
-            with open(file_path, "rb") as file:
-                picture_info = {}
-                tags = exifread.process_file(file, details=False)
-                for tag, value in tags.items():
-                    if tag.startswith("Image ") or tag.startswith("EXIF "):
-                        picture_info[tag] = value
-                picture_info_list.append(picture_info)
-
+            try:
+                with open(file_path, "rb") as file:
+                    picture_info = {}
+                    tags = exifread.process_file(file, details=False)
+                    for tag, value in tags.items():
+                        if tag.startswith("Image ") or tag.startswith("EXIF "):
+                            picture_info[tag] = value
+                    picture_info_list.append(picture_info)
+            except Exception as e:
+                # エラーは握り潰して見なかったことにするのだ
+                pass
+        
+        # F値を小数点表記に変換
+        for i, val in enumerate(picture_info_list):
+            picture_info_list[i]["EXIF FNumber"] = float(Fraction(str(val["EXIF FNumber"])))
         return picture_info_list
 
     def validate_input_path(self, argv: list[str]) -> bool:
