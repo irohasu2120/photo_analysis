@@ -1,19 +1,18 @@
-from fractions import Fraction
 import pathlib
-import glob
 from pprint import pprint
 import exifread
-from matplotlib import pyplot, font_manager
-import matplotlib_fontja
-import numpy as np
 import sys
 import os
+
+from generate_pdf import GeneratePDF
 
 
 class Main:
     """
     メインクラス
     """
+    # 画像フォルダパスインデックス
+    IMAGE_DIR_INDEX = 2
 
     def main_routine(self, argv: list[str]):
         """
@@ -27,10 +26,11 @@ class Main:
 
         # 指定フォルダ内の画像を読み込む
         image_file_list = self.get_image_files_path(argv[1])
-        # pprint(str(image_file_list[0]))
-        # print(len(picture_info_list))
-        # pprint(image_file_list)
-        self.read_exif_data(image_file_list)
+        image_exif_list = self.read_exif_data(image_file_list)
+
+        generate_pdf = GeneratePDF()
+        generate_pdf.generate(image_exif_list)
+        # pprint(image_exif_list)
 
     def get_image_files_path(self, source_path: str) -> list[pathlib.Path]:
         """
@@ -40,19 +40,14 @@ class Main:
         Returns:
             list: 画像ファイルパスリスト
         """
-        # pathlib_path =
-
-        # # TODO 絶対パスに変換する必要ある？
         pathlib_path = pathlib.Path(source_path).resolve()
 
-        # TODO exif情報を持ってないjpgファイルも想定する
         # TODO 拡張子がjpegのファイルも想定する
 
         # 画像ファイルリストを取得（再帰的）
-        # return list(pathlib.Path(pathlib_path).rglob("*.JPG"))
         return list(pathlib_path.rglob("*.JPG"))
 
-    def read_exif_data(self, file_path_list: list[pathlib.Path]):
+    def read_exif_data(self, file_path_list: list[pathlib.Path]) -> list[dict]:
         """
         指定フォルダ内の画像を読み込むメソッド
         Args:
@@ -60,6 +55,7 @@ class Main:
         Returns:
             dict: EXIFデータ
         """
+        # TODO exif情報を持ってないjpgファイルも想定する
         picture_info_list = []
         for file_path in file_path_list:
             with open(file_path, "rb") as file:
@@ -80,7 +76,7 @@ class Main:
         Returns:
             bool: 正当性確認結果
         """
-        if len(argv) < 2:
+        if len(argv) < self.IMAGE_DIR_INDEX:
             print("エラー：引数が不足しています。")
             return False
         if not os.path.exists(argv[1]):
