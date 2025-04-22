@@ -6,7 +6,11 @@ import matplotlib_fontja
 import numpy as np
 from reportlab.platypus import BaseDocTemplate, SimpleDocTemplate, Paragraph, Image, frames, PageTemplate
 from reportlab.lib.pagesizes import A4, mm, landscape, portrait
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.pdfbase import pdfmetrics, cidfonts
 import datetime
+
+from chart.lens_pie_chart import LensPieChart
 
 
 class GeneratePDF:
@@ -18,17 +22,28 @@ class GeneratePDF:
     # PDFファイル名テンプレート
     FILE_NAME_TEMPLATE = "photograph_analysis_report_{generate_timestamp}.pdf"
 
+    def __init__(self):
+        """
+        コンストラクタ
+        """
+        # フォント登録
+        pdfmetrics.registerFont(cidfonts.UnicodeCIDFont("HeiseiKakuGo-W5"))
+
+
     def generate(self, image_exif_list: list[dict]):
         """
         PDF生成
         Args:
             image_exif_list: 画像EXIF情報リスト
         """
-        pprint(image_exif_list)
-        self.ini_pdf()
-        pass
+        # pprint(image_exif_list)
+        # PDFテンプレートを作成
+        self.create_pdf_template()
+        # 使用レンズ割合の円グラフを作成
+        # lens_pie_chart = LensPieChart()
+        # lens_pie_chart.generate_pie_chart(image_exif_list)
 
-    def ini_pdf(self):
+    def create_pdf_template(self):
         """
         PDF初期化処理
         """
@@ -50,11 +65,28 @@ class GeneratePDF:
             # topMargin=72,
             # bottomMargin=18,
         )
+        width, height = A4
+
+        show = 1
         frame_list = [
-            frames.Frame(25 * mm, 120*mm, 150*mm, 50*mm, showBoundary=1)
+            frames.Frame(15*mm, 15*mm, width-30*mm,
+                         height-30*mm, showBoundary=show),
         ]
         page_template = PageTemplate("test", frames=frame_list)
         doc.addPageTemplates(page_template)
 
         flowables = []
+
+        style = ParagraphStyle(
+            name="Normal",
+            fontName="HeiseiKakuGo-W5",
+            fontSize=12,
+            leading=14,
+            spaceAfter=10,
+            alignment=1,
+        )
+        para = Paragraph("使用レンズの割合", style)
+        flowables.append(para)
+
+        # PDF出力
         doc.multiBuild(flowables)

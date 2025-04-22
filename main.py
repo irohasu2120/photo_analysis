@@ -67,7 +67,6 @@ class Main:
             except Exception as e:
                 # エラーは握り潰して見なかったことにするのだ
                 pass
-
         # F値を小数点表記に変換
         for i, val in enumerate(picture_info_list):
             picture_info_list[i]["EXIF FNumber"] = float(
