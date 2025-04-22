@@ -43,11 +43,8 @@ class Main:
             list: 画像ファイルパスリスト
         """
         pathlib_path = pathlib.Path(source_path).resolve()
-
-        # TODO 拡張子がjpegのファイルも想定する
-
-        # 画像ファイルリストを取得（再帰的）
-        return list(pathlib_path.rglob("*.JPG"))
+        path_list = list(pathlib_path.rglob("*.*"))
+        return [f for f in path_list if f.suffix.lower() in [".jpg", ".jpeg", ".tiff"]]
 
     def read_exif_data(self, file_path_list: list[pathlib.Path]) -> list[dict]:
         """
@@ -57,7 +54,6 @@ class Main:
         Returns:
             dict: EXIFデータ
         """
-        # TODO exif情報を持ってないjpgファイルも想定する
         picture_info_list = []
         for file_path in file_path_list:
             try:
@@ -71,10 +67,11 @@ class Main:
             except Exception as e:
                 # エラーは握り潰して見なかったことにするのだ
                 pass
-        
+
         # F値を小数点表記に変換
         for i, val in enumerate(picture_info_list):
-            picture_info_list[i]["EXIF FNumber"] = float(Fraction(str(val["EXIF FNumber"])))
+            picture_info_list[i]["EXIF FNumber"] = float(
+                Fraction(str(val["EXIF FNumber"])))
         return picture_info_list
 
     def validate_input_path(self, argv: list[str]) -> bool:

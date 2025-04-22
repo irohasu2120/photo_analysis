@@ -1,3 +1,4 @@
+import pathlib
 from pprint import pprint
 from fractions import Fraction
 from matplotlib import pyplot, font_manager
@@ -12,6 +13,8 @@ class GeneratePDF:
     """
     PDF生成クラス
     """
+    # PDFファイル出力先
+    FILE_OUTPUT_PATH = "out"
     # PDFファイル名テンプレート
     FILE_NAME_TEMPLATE = "photograph_analysis_report_{generate_timestamp}.pdf"
 
@@ -21,7 +24,7 @@ class GeneratePDF:
         Args:
             image_exif_list: 画像EXIF情報リスト
         """
-        # pprint(image_exif_list)
+        pprint(image_exif_list)
         self.ini_pdf()
         pass
 
@@ -29,11 +32,18 @@ class GeneratePDF:
         """
         PDF初期化処理
         """
+
+        # ファイル名生成
         generate_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         file_name = self.FILE_NAME_TEMPLATE.format(
             generate_timestamp=generate_timestamp)
+
+        # PDFファイル出力先
+        file_path = str(
+            (pathlib.Path(self.FILE_OUTPUT_PATH) / file_name).resolve())
+
         doc = BaseDocTemplate(
-            file_name,
+            file_path,
             pagesize=portrait(A4),
             # rightMargin=72,
             # leftMargin=72,
