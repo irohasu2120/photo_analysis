@@ -13,7 +13,7 @@ class Main:
     メインクラス
     """
     # 画像フォルダパスインデックス
-    IMAGE_DIR_INDEX = 2
+    PHOTO_DIR_INDEX = 2
 
     def main_routine(self, argv: list[str]):
         """
@@ -26,15 +26,15 @@ class Main:
             return
 
         # 指定フォルダ内の画像を読み込む
-        image_file_list = self.get_image_files_path(argv[1])
-        image_exif_list = self.read_exif_data(image_file_list)
+        photo_files = self.get_photo_files_path(argv[1])
+        photo_exifs = self.read_exif_data(photo_files)
 
         # PDF生成
         generate_pdf = GeneratePDF()
-        generate_pdf.generate(image_exif_list)
+        generate_pdf.generate(photo_exifs)
         # pprint(image_exif_list)
 
-    def get_image_files_path(self, source_path: str) -> list[pathlib.Path]:
+    def get_photo_files_path(self, source_path: str) -> list[pathlib.Path]:
         """
         指定フォルダ内の画像ファイルパスを取得するメソッド
         Args:
@@ -43,19 +43,19 @@ class Main:
             list: 画像ファイルパスリスト
         """
         pathlib_path = pathlib.Path(source_path).resolve()
-        path_list = list(pathlib_path.rglob("*.*"))
-        return [f for f in path_list if f.suffix.lower() in [".jpg", ".jpeg", ".tiff"]]
+        paths = list(pathlib_path.rglob("*.*"))
+        return [f for f in paths if f.suffix.lower() in [".jpg", ".jpeg", ".tiff"]]
 
-    def read_exif_data(self, file_path_list: list[pathlib.Path]) -> list[dict]:
+    def read_exif_data(self, file_paths: list[pathlib.Path]) -> list[dict]:
         """
         指定フォルダ内の画像を読み込むメソッド
         Args:
-            file_path_list: 画像ファイルパスリスト
+            file_paths: 画像ファイルパスリスト
         Returns:
             dict: EXIFデータ
         """
-        picture_info_list = []
-        for file_path in file_path_list:
+        picture_infos = []
+        for file_path in file_paths:
             try:
                 with open(file_path, "rb") as file:
                     picture_info = {}
@@ -63,15 +63,15 @@ class Main:
                     for tag, value in tags.items():
                         if tag.startswith("Image ") or tag.startswith("EXIF "):
                             picture_info[tag] = value
-                    picture_info_list.append(picture_info)
+                    picture_infos.append(picture_info)
             except Exception as e:
                 # エラーは握り潰して見なかったことにするのだ
                 pass
         # F値を小数点表記に変換
-        for i, val in enumerate(picture_info_list):
-            picture_info_list[i]["EXIF FNumber"] = float(
+        for i, val in enumerate(picture_infos):
+            picture_infos[i]["EXIF FNumber"] = float(
                 Fraction(str(val["EXIF FNumber"])))
-        return picture_info_list
+        return picture_infos
 
     def validate_input_path(self, argv: list[str]) -> bool:
         """
@@ -81,7 +81,7 @@ class Main:
         Returns:
             bool: 正当性確認結果
         """
-        if len(argv) < self.IMAGE_DIR_INDEX:
+        if len(argv) < self.PHOTO_DIR_INDEX:
             print("エラー：引数が不足しています。")
             return False
         if not os.path.exists(argv[1]):

@@ -1,8 +1,6 @@
 import pathlib
 from pprint import pprint
 from fractions import Fraction
-from matplotlib import pyplot, font_manager
-import matplotlib_fontja
 import numpy as np
 from reportlab.platypus import BaseDocTemplate, SimpleDocTemplate, Paragraph, Image, frames, PageTemplate
 from reportlab.lib.pagesizes import A4, mm, landscape, portrait
@@ -30,18 +28,18 @@ class GeneratePDF:
         pdfmetrics.registerFont(cidfonts.UnicodeCIDFont("HeiseiKakuGo-W5"))
 
 
-    def generate(self, image_exif_list: list[dict]):
+    def generate(self, image_exifs: list[dict]):
         """
         PDF生成
         Args:
-            image_exif_list: 画像EXIF情報リスト
+            image_exifs: 画像EXIF情報リスト
         """
         # pprint(image_exif_list)
         # PDFテンプレートを作成
         self.create_pdf_template()
         # 使用レンズ割合の円グラフを作成
-        # lens_pie_chart = LensPieChart()
-        # lens_pie_chart.generate_pie_chart(image_exif_list)
+        lens_pie_chart = LensPieChart()
+        lens_pie_chart.generate_pie_chart(image_exifs)
 
     def create_pdf_template(self):
         """
@@ -70,7 +68,7 @@ class GeneratePDF:
         show = 1
         frame_list = [
             frames.Frame(15*mm, 15*mm, width-30*mm,
-                         height-30*mm, showBoundary=show),
+                         height-30*mm, showBoundary=0),
         ]
         page_template = PageTemplate("test", frames=frame_list)
         doc.addPageTemplates(page_template)
@@ -89,4 +87,6 @@ class GeneratePDF:
         flowables.append(para)
 
         # PDF出力
-        doc.multiBuild(flowables)
+        # TODO buildメソッドとの違いは何？
+        # doc.multiBuild(flowables)
+
