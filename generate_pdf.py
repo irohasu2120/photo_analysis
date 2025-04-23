@@ -8,7 +8,7 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics, cidfonts
 import datetime
 
-from chart.lens_pie_chart import LensPieChart
+from chart.generate_lens_pie_chart import GenerateLensPieChart
 
 
 class GeneratePDF:
@@ -27,7 +27,6 @@ class GeneratePDF:
         # フォント登録
         pdfmetrics.registerFont(cidfonts.UnicodeCIDFont("HeiseiKakuGo-W5"))
 
-
     def generate(self, image_exifs: list[dict]):
         """
         PDF生成
@@ -36,12 +35,13 @@ class GeneratePDF:
         """
         # pprint(image_exif_list)
         # PDFテンプレートを作成
-        self.create_pdf_template()
+        doc, flowables = self.create_pdf_template()
         # 使用レンズ割合の円グラフを作成
-        lens_pie_chart = LensPieChart()
-        lens_pie_chart.generate_pie_chart(image_exifs)
+        self.create_lens_pie_chart(doc, flowables, image_exifs)
 
-    def create_pdf_template(self):
+        # PDFに円グラフを貼り付ける
+
+    def create_pdf_template(self) -> BaseDocTemplate| list:
         """
         PDF初期化処理
         """
@@ -74,7 +74,6 @@ class GeneratePDF:
         doc.addPageTemplates(page_template)
 
         flowables = []
-
         style = ParagraphStyle(
             name="Normal",
             fontName="HeiseiKakuGo-W5",
@@ -85,8 +84,21 @@ class GeneratePDF:
         )
         para = Paragraph("使用レンズの割合", style)
         flowables.append(para)
+        return doc, flowables
 
         # PDF出力
         # TODO buildメソッドとの違いは何？
         # doc.multiBuild(flowables)
 
+    def create_lens_pie_chart(self, doc: BaseDocTemplate, flowables: list, image_exifs: dict):
+        """
+        円グラフを作成するメソッド
+        Args:
+            image_exifs: 画像EXIF情報リスト
+        """
+        generate_lens_pie_chart = GenerateLensPieChart()
+        lens_pie_chart = generate_lens_pie_chart.generate_lens_pie_chart(
+            image_exifs)
+        # 円グラフをPDFに貼り付ける
+        flowables.append(Image(lens_pie_chart))
+        doc.build(flowables)

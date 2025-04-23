@@ -1,19 +1,20 @@
+import io
 from matplotlib import pyplot, font_manager
 import matplotlib_fontja
 from pprint import pprint
 
 
-class LensPieChart:
+class GenerateLensPieChart:
     """
     使用レンズの割合を円グラフで作成するクラス
     """
 
-    def generate_pie_chart(self, photo_exifs: list[dict]):
+    def generate_lens_pie_chart(self, photo_exifs: list[dict]):
         """
         使用レンズの割合を円グラフで作成するメソッド
         """
         lens_count_dict = self.extract_lens_info(photo_exifs)
-        self.create_pie_chart(lens_count_dict)
+        return self.create_pie_chart(lens_count_dict)
 
     def extract_lens_info(self, photo_exifs: list[dict]) -> dict:
         """
@@ -38,7 +39,13 @@ class LensPieChart:
             else:
                 lens_count_dict[lens_name] = 1
 
-        return lens_count_dict
+        # 上位5位まではそのまま、その他はまとめる
+        lens_chart_dict = dict(
+            sorted(lens_count_dict.items(), key=lambda x: x[1], reverse=True)[:5])
+        others_sum = sum(
+            value for key, value in lens_count_dict.items() if key not in lens_chart_dict)
+        lens_chart_dict['その他'] = others_sum  # その他を追加
+        return lens_chart_dict
 
     def create_pie_chart(self, lens_count_dict: dict):
         """
@@ -51,7 +58,23 @@ class LensPieChart:
         sizes = list(lens_count_dict.values())
 
         # 円グラフを作成
-        fig, ax = pyplot.subplots()
-        ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
-        ax.axis('equal')
-        fig.savefig("aaa.png")
+        fig, ax = pyplot.subplots(figsize=(7, 3), dpi=300)
+        wedges, texts, autotexts = ax.pie(
+            sizes, labels=None, autopct='%1.1f%%', startangle=90, counterclock=False,)
+        ax.legend(labels, title="凡例", loc='lower left',
+                  fontsize=8, bbox_to_anchor=(1, 0, 0.5, 1))
+        # ax.axis('equal')
+        pyplot.setp(autotexts, size=8, weight="bold", color="white")
+        # ax.set_title("使用レンズの割合", fontsize=12)
+        
+        # ジャストフィットさせる
+        pyplot.tight_layout()
+
+        # グラフを出力
+        buf = io.BytesIO()
+        with io.BytesIO() as buf:
+            pyplot.savefig(buf, format='png')
+            buf.seek(0)
+            graph_image = buf.getvalue()
+            buf.close()
+        return  graph_image
