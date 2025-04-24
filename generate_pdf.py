@@ -8,6 +8,7 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics, cidfonts
 import datetime
 
+from chart.generate_lens_bar_chart import GenerateLensBarChart
 from chart.generate_lens_pie_chart import GenerateLensPieChart
 
 
@@ -35,13 +36,13 @@ class GeneratePDF:
         """
         # pprint(image_exif_list)
         # PDFテンプレートを作成
-        doc, flowables = self.create_pdf_template()
-        # 使用レンズ割合の円グラフを作成
-        self.create_lens_pie_chart(doc, flowables, image_exifs)
+        doc, contents = self.create_pdf_template()
+        # # 使用レンズ割合の円グラフを作成
+        # self.create_lens_pie_chart(doc, contents, image_exifs)
+        # 使用レンズ割合の棒グラフを作成
+        self.create_lens_bar_chart(doc, contents, image_exifs)
 
-        # PDFに円グラフを貼り付ける
-
-    def create_pdf_template(self) -> BaseDocTemplate| list:
+    def create_pdf_template(self) -> BaseDocTemplate | list:
         """
         PDF初期化処理
         """
@@ -55,50 +56,58 @@ class GeneratePDF:
         file_path = str(
             (pathlib.Path(self.FILE_OUTPUT_PATH) / file_name).resolve())
 
-        doc = BaseDocTemplate(
+        # simpleDocTemplate
+        contents = []
+        doc = SimpleDocTemplate(
             file_path,
             pagesize=portrait(A4),
-            # rightMargin=72,
-            # leftMargin=72,
-            # topMargin=72,
-            # bottomMargin=18,
+            rightMargin=(10*mm),
+            leftMargin=(10*mm),
+            topMargin=(5*mm),
+            bottomMargin=(5*mm),
         )
-        width, height = A4
+        # contents.append(Paragraph("テスト", style=ParagraphStyle(
+        #     name="title", fontName="HeiseiKakuGo-W5",)))
+        return doc, contents
 
-        show = 1
-        frame_list = [
-            frames.Frame(15*mm, 15*mm, width-30*mm,
-                         height-30*mm, showBoundary=0),
-        ]
-        page_template = PageTemplate("test", frames=frame_list)
-        doc.addPageTemplates(page_template)
-
-        flowables = []
-        style = ParagraphStyle(
-            name="Normal",
-            fontName="HeiseiKakuGo-W5",
-            fontSize=12,
-            leading=14,
-            spaceAfter=10,
-            alignment=1,
-        )
-        para = Paragraph("使用レンズの割合", style)
-        flowables.append(para)
-        return doc, flowables
-
-        # PDF出力
-        # TODO buildメソッドとの違いは何？
-        # doc.multiBuild(flowables)
-
-    def create_lens_pie_chart(self, doc: BaseDocTemplate, flowables: list, image_exifs: dict):
+    def create_lens_pie_chart(self, doc: BaseDocTemplate, contents: list, image_exifs: dict):
         """
         円グラフを作成するメソッド
         Args:
             image_exifs: 画像EXIF情報リスト
         """
         generate_lens_pie_chart = GenerateLensPieChart()
-        lens_pie_chart = generate_lens_pie_chart.generate_lens_pie_chart(
+        img = generate_lens_pie_chart.generate_lens_pie_chart(
             image_exifs)
         # 円グラフをPDFに貼り付ける
-        flowables.append(Image(lens_pie_chart))
-        doc.build(flowables)
+        lens_pie_chart_image = Image(
+            img,
+            width=doc.pagesize[0] - 20*mm,
+            height=doc.pagesize[1] - 20*mm,
+            kind="proportional",
+            # hAlign="CENTER",
+            # vAlign="MIDDLE",
+        )
+        contents.append(lens_pie_chart_image)
+        doc.build(contents)
+
+    def create_lens_bar_chart(self, doc: BaseDocTemplate, contents: list, image_exifs: dict):
+        """
+        棒グラフを作成するメソッド
+        Args:
+            image_exifs: 画像EXIF情報リスト
+        """
+        generate_lens_bar_chart = GenerateLensBarChart()
+        img = generate_lens_bar_chart.generate_lens_bar_chart(
+            image_exifs)
+        # 棒グラフをPDFに貼り付ける
+        lens_bar_chart_image = Image(
+            img,
+            width=doc.pagesize[0] - 20*mm,
+            height=doc.pagesize[1] - 20*mm,
+            kind="proportional",
+            # hAlign="CENTER",
+            # vAlign="MIDDLE",
+        )
+        contents.append(lens_bar_chart_image)
+        doc.build(contents)

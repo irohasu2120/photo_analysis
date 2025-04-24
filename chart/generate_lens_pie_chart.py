@@ -1,13 +1,21 @@
 import io
+# import matplotlib
 from matplotlib import pyplot, font_manager
 import matplotlib_fontja
 from pprint import pprint
+# from reportlab.lib.pagesizes import A4, landscape, portrait
+import numpy as np
 
 
 class GenerateLensPieChart:
     """
     使用レンズの割合を円グラフで作成するクラス
     """
+    a4 = (8.27, 11.69)  # A4サイズのインチ数
+    mm = 0.0393701  # インチからmmへの変換係数
+
+    # def __init__(self):
+    #     matplotlib.use('Agg')
 
     def generate_lens_pie_chart(self, photo_exifs: list[dict]):
         """
@@ -55,26 +63,36 @@ class GenerateLensPieChart:
         """
         # 円グラフのデータを準備
         labels = list(lens_count_dict.keys())
-        sizes = list(lens_count_dict.values())
+        data = list(lens_count_dict.values())
 
         # 円グラフを作成
-        fig, ax = pyplot.subplots(figsize=(7, 3), dpi=300)
-        wedges, texts, autotexts = ax.pie(
-            sizes, labels=None, autopct='%1.1f%%', startangle=90, counterclock=False,)
-        ax.legend(labels, title="凡例", loc='lower left',
-                  fontsize=8, bbox_to_anchor=(1, 0, 0.5, 1))
-        # ax.axis('equal')
-        pyplot.setp(autotexts, size=8, weight="bold", color="white")
-        # ax.set_title("使用レンズの割合", fontsize=12)
-        
-        # ジャストフィットさせる
-        pyplot.tight_layout()
+        fig, ax = pyplot.subplots(
+            # layout="constrained", figsize=(self.a4[0] - (40*self.mm), (self.a4[1] - (40*self.mm))/5), dpi=350)
+            subplot_kw=dict(aspect="equal"), figsize=(self.a4[0] - (40*self.mm), (self.a4[1] - (40*self.mm))/5), dpi=350)
 
-        # グラフを出力
-        buf = io.BytesIO()
-        with io.BytesIO() as buf:
-            pyplot.savefig(buf, format='png')
-            buf.seek(0)
-            graph_image = buf.getvalue()
-            buf.close()
-        return  graph_image
+        wedges, texts = ax.pie(
+            # sizes, labels=None, autopct='%1.1f%%', startangle=90, counterclock=False,)
+            data, wedgeprops=dict(width=0.5), startangle=-40, )
+        # ax.legend(labels, title="凡例", loc='lower left',
+        #           fontsize=8, )
+
+        bbox_props = dict(boxstyle="square,pad=0.3", fc="w", ec="k", lw=0.72)
+        kw = dict(arrowprops=dict(arrowstyle="-"),
+                  bbox=bbox_props, zorder=0, va="center")
+
+        for i, p in enumerate(wedges):
+            ang = (p.theta2 - p.theta1)/2.0 + p.theta1
+            y = np.sin(np.deg2rad(ang))
+            x = np.cos(np.deg2rad(ang))
+            horizontalalignment = {-1: "right", 1: "left"}[int(np.sign(x))]
+            connectionstyle = f"angle,angleA=0,angleB={ang}"
+            kw["arrowprops"].update({"connectionstyle": connectionstyle})
+            ax.annotate(labels[i], xy=(x, y), xytext=(1.35*np.sign(x), 1.4*y),
+                        horizontalalignment=horizontalalignment, **kw)
+
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format='png')
+        buffer.seek(0)
+        pyplot.close(fig)  # グラフを閉じる
+
+        return buffer
