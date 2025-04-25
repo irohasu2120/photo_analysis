@@ -8,12 +8,12 @@ class GenerateLensBarChart:
     a4 = (8.27, 11.69)  # A4サイズのインチ数
     mm = 0.0393701  # インチからmmへの変換係数
 
-    def generate_lens_bar_chart(self, photo_exifs: list[dict]):
+    def sub_routine(self, photo_exifs: list[dict]) -> io.BytesIO:
         """
         使用レンズの割合を棒グラフで作成するメソッド
         """
         lens_count_dict = self.extract_lens_info(photo_exifs)
-        return self.create_bar_chart(lens_count_dict)
+        return self.create_lens_bar_chart(lens_count_dict)
 
     def extract_lens_info(self, photo_exifs: list[dict]) -> dict:
         """
@@ -21,7 +21,7 @@ class GenerateLensBarChart:
         Args:
             photo_exifs: 画像EXIF情報リスト
         Returns:
-            dict: レンズ名と出現回数
+            dict: レンズ名と出現回数dict
         """
         # 使用レンズを抽出
         lens_infos = []
@@ -46,7 +46,14 @@ class GenerateLensBarChart:
         lens_chart_dict['その他'] = others_sum  # その他を追加
         return lens_chart_dict
 
-    def create_bar_chart(self, lens_count_dict: dict):
+    def create_lens_bar_chart(self, lens_count_dict: dict) -> io.BytesIO:
+        """
+        レンズ使用回数を棒グラフで表示するメソッド
+        Args:
+            lens_count_dict: レンズ名と出現回数dict
+        Return:
+            buf: 画像データ
+        """
         # 棒グラフのデータを準備
         labels = list(lens_count_dict.keys())
         data = list(lens_count_dict.values())

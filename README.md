@@ -1,8 +1,8 @@
-# 撮影スタイル分析PDF
+# 撮影スタイルレポート
 ## 概要
-これまでに撮影した写真ファイルに記録されているExif情報を解析し、その情報からPDFレポートを作成します。  
+これまでに撮影した写真ファイルに記録されているExif情報を分析し、その情報からPDFレポートを作成します。  
 
-前提条件：jpgファイルのみ。ファイルパス指定はWindows準拠。
+前提条件：分析対象の画像フォーマットはjpg(jpeg), tiffファイルのみ。ファイルパスはWindows準拠で記載しています。
 
 - 初期設定
   1. Pythonのインストール
@@ -19,9 +19,9 @@
   - 前提
     - ターミナル起動の度に仮想環境を有効化すること。
   - 生成コマンド
-    - `python main.py "{解析対象フォルダ}"`
+    - `python generate_pdf.py "{分析対象フォルダ}"`
   - 生成コマンドサンプル
-    - `python main.py "C:\\sample\\photograph_dir"`
+    - `python generate_pdf.py "C:\\sample\\photograph_dir"`
   - 出力先
     - `.\out`
 
