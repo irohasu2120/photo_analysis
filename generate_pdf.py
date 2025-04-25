@@ -1,21 +1,23 @@
 import sys
 import os
+import datetime
 import pathlib
 from pprint import pprint
-from fractions import Fraction
 from typing import Tuple
-import exifread
-import numpy as np
-from reportlab.platypus import BaseDocTemplate, SimpleDocTemplate, Paragraph, Image, frames, PageTemplate
-from reportlab.lib.pagesizes import A4, mm, landscape, portrait
+
+from fractions import Fraction
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Image, Spacer
+from reportlab.lib.pagesizes import A4, portrait
+from reportlab.lib.units import mm
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics, cidfonts
-import datetime
+import exifread
+import numpy as np
 
 from chart.lens_bar_chart import GenerateLensBarChart
 
 
-class GeneratePDF:
+class GeneratePdf:
     """
     PDF生成クラス
     """
@@ -44,8 +46,13 @@ class GeneratePDF:
             return
 
         # 指定フォルダ内の画像を読み込む
-        photo_files = self.get_photo_files_path(argv[1])
+        photo_files = self.collect_photo_files_path(argv[1])
         photo_exifs = self.read_exif_data(photo_files)
+
+        # exif情報が取得出来ない場合は処理を終了
+        if len(photo_exifs) == 0:
+            print("EXIF情報が取得できませんでした。処理を終了します。")
+            return
 
         # PDFテンプレートを作成
         doc, contents = self.initialize_pdf_template()
@@ -54,45 +61,6 @@ class GeneratePDF:
 
         # PDF生成
         doc.build(contents)
-
-    def get_photo_files_path(self, source_path: str) -> list[pathlib.Path]:
-        """
-        指定フォルダ内の画像ファイルパスを取得するメソッド
-        Args:
-            source_path: 画像フォルダパス
-        Returns:
-            list: 画像ファイルパスリスト
-        """
-        pathlib_path = pathlib.Path(source_path).resolve()
-        paths = list(pathlib_path.rglob("*.*"))
-        return [f for f in paths if f.suffix.lower() in [".jpg", ".jpeg", ".tiff"]]
-
-    def read_exif_data(self, file_paths: list[pathlib.Path]) -> list[dict]:
-        """
-        指定フォルダ内の画像を読み込むメソッド
-        Args:
-            file_paths: 画像ファイルパスリスト
-        Returns:
-            dict: EXIFデータ
-        """
-        picture_infos = []
-        for file_path in file_paths:
-            try:
-                with open(file_path, "rb") as file:
-                    picture_info = {}
-                    tags = exifread.process_file(file, details=False)
-                    for tag, value in tags.items():
-                        if tag.startswith("Image ") or tag.startswith("EXIF "):
-                            picture_info[tag] = value
-                    picture_infos.append(picture_info)
-            except Exception as e:
-                # エラーは握り潰して見なかったことにするのだ
-                pass
-        # F値を小数点表記に変換
-        for i, val in enumerate(picture_infos):
-            picture_infos[i]["EXIF FNumber"] = float(
-                Fraction(str(val["EXIF FNumber"])))
-        return picture_infos
 
     def validate_input_path(self, argv: list[str]) -> bool:
         """
@@ -110,7 +78,45 @@ class GeneratePDF:
             return False
         return True
 
-    def initialize_pdf_template(self) -> Tuple[BaseDocTemplate, list]:
+    def collect_photo_files_path(self, source_path: str) -> list[pathlib.Path]:
+        """
+        指定フォルダ内の画像ファイルパスを収集するメソッド
+        Args:
+            source_path: 画像フォルダパス
+        Returns:
+            list: 画像ファイルパスリスト
+        """
+        pathlib_path = pathlib.Path(source_path).resolve()
+        paths = list(pathlib_path.rglob("*.*"))
+        return [f for f in paths if f.suffix.lower() in [".jpg", ".jpeg", ".tiff"]]
+
+    def read_exif_data(self, file_paths: list[pathlib.Path]) -> list[dict]:
+        """
+        対象の画像ファイルからEXIF情報を読み込むメソッド
+        Args:
+            file_paths: 画像ファイルパスリスト
+        Returns:
+            dict: EXIFデータ
+        """
+        picture_infos = []
+        for file_path in file_paths:
+            try:
+                with open(file_path, "rb") as file:
+                    picture_info = {}
+                    tags = exifread.process_file(file, details=False)
+                    for tag, value in tags.items():
+                        if tag.startswith("Image ") or tag.startswith("EXIF "):
+                            picture_info[tag] = value
+                    picture_infos.append(picture_info)
+            except Exception as e:
+                print(f"エラー：画像のEXIF情報を読込中にエラーが発生しました。画像パス：{file_path} {e}")
+        # F値を小数点表記に変換
+        for i, val in enumerate(picture_infos):
+            picture_infos[i]["EXIF FNumber"] = float(
+                Fraction(str(val["EXIF FNumber"])))
+        return picture_infos
+
+    def initialize_pdf_template(self) -> Tuple[SimpleDocTemplate, list]:
         """
         PDF初期化処理
         """
@@ -135,9 +141,9 @@ class GeneratePDF:
         contents = []
         return doc, contents
 
-    def create_lens_bar_chart(self, doc: BaseDocTemplate, contents: list, photo_exifs: dict):
+    def create_lens_bar_chart(self, doc: SimpleDocTemplate, contents: list, photo_exifs: dict):
         """
-        棒グラフを作成するメソッド
+        使用レンズ回数を示す棒グラフを作成するメソッド
         Args:
             photo_exifs: 画像EXIF情報リスト
         """
@@ -155,5 +161,5 @@ class GeneratePDF:
 
 
 if __name__ == "__main__":
-    generate_pdf = GeneratePDF()
+    generate_pdf = GeneratePdf()
     generate_pdf.main(sys.argv)
