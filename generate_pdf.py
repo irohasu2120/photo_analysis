@@ -9,7 +9,7 @@ from fractions import Fraction
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Image, Spacer
 from reportlab.lib.pagesizes import A4, portrait
 from reportlab.lib.units import mm
-from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.pdfbase import pdfmetrics, cidfonts
 import exifread
 import numpy as np
@@ -28,12 +28,19 @@ class GeneratePdf:
     # PDFファイル名テンプレート
     FILE_NAME_TEMPLATE = "photograph_analysis_report_{generate_timestamp}.pdf"
 
+    paragraph_sample_style = None
+
     def __init__(self):
         """
         コンストラクタ
         """
         # フォント登録
         pdfmetrics.registerFont(cidfonts.UnicodeCIDFont("HeiseiKakuGo-W5"))
+        # ParagraphStyleのテンプレートを取得
+        self.paragraph_sample_style = getSampleStyleSheet()
+        self.paragraph_sample_style["Title"].fontName = "HeiseiKakuGo-W5"
+        self.paragraph_sample_style["Heading2"].fontName = "HeiseiKakuGo-W5"
+        self.paragraph_sample_style["Heading3"].fontName = "HeiseiKakuGo-W5"
 
     def main(self, argv: list[str]):
         """
@@ -56,8 +63,25 @@ class GeneratePdf:
 
         # PDFテンプレートを作成
         doc, contents = self.initialize_pdf_template()
-        # 使用レンズ割合の棒グラフを作成
+
+        # # ParagraphStyleのテンプレートを取得
+        # paragraph_sample_style = getSampleStyleSheet()
+
+        # PDFタイトルを描画
+        #TODO cloneした方がよいか？
+        paragraph_title = self.paragraph_sample_style["Title"]
+        # paragraph_title.fontName = "HeiseiKakuGo-W5"
+        paragraph_title.underlineWidth = 1
+        title = Paragraph(
+            "<u>撮影スタイルレポート</u>",
+            style=paragraph_title,
+        )
+        contents.append(title)
+        contents.append(Spacer(1, 12))
+
+        # 使用レンズ割合の棒グラフを描画
         self.create_lens_bar_chart(doc, contents, photo_exifs)
+        contents.append(Spacer(1, 12))
 
         # PDF生成
         doc.build(contents)
@@ -147,6 +171,15 @@ class GeneratePdf:
         Args:
             photo_exifs: 画像EXIF情報リスト
         """
+        header_style = self.paragraph_sample_style["Heading2"]
+        header_style.underlineWidth = 1
+        header = Paragraph(
+            "<u>使用レンズ回数</u>",
+            style=header_style,
+        )
+        contents.append(header)
+        contents.append(Spacer(1, 4))
+
         generate_lens_bar_chart = GenerateLensBarChart()
         img = generate_lens_bar_chart.sub_routine(photo_exifs)
         lens_bar_chart_image = Image(
