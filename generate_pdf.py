@@ -3,10 +3,10 @@ import sys
 import os
 import datetime
 import pathlib
-from pprint import pprint
 from typing import Tuple
 
 from fractions import Fraction
+from reportlab.lib import enums
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Image, Spacer, Table
 from reportlab.lib.pagesizes import A4, portrait
 from reportlab.lib.units import mm
@@ -84,7 +84,7 @@ class GeneratePdf:
         paragraph_title = self.paragraph_sample_style["Title"]
         paragraph_title.underlineWidth = 1
         title = Paragraph(
-            "<u>撮影スタイルレポート</u>",
+            "<u>撮影スタイルレポート ver0.1α版</u>",
             style=paragraph_title,
         )
         contents.append(title)
@@ -106,6 +106,14 @@ class GeneratePdf:
         self.create_f_and_focal_length_scatter_chart(
             doc, contents, photo_exifs)
         contents.append(Spacer(1, 12))
+
+        footer_style = self.paragraph_sample_style["BodyText"]
+        footer_style.alignment = enums.TA_RIGHT
+        paragraph_footer = Paragraph(
+            "report tool created by threads@suguru031213",
+            style=footer_style,
+        )
+        contents.append(paragraph_footer)
 
         # PDF生成
         doc.build(contents)
