@@ -1,3 +1,4 @@
+from logging import getLogger, INFO, DEBUG, Formatter, FileHandler
 import sys
 import os
 import datetime
@@ -14,6 +15,7 @@ from reportlab.pdfbase import pdfmetrics, cidfonts
 import exifread
 import numpy as np
 
+from chart.camera_bar_chart import GenerateCameraBarChart
 from chart.lens_bar_chart import GenerateLensBarChart
 
 
@@ -28,16 +30,28 @@ class GeneratePdf:
     # PDFファイル名テンプレート
     FILE_NAME_TEMPLATE = "photograph_analysis_report_{generate_timestamp}.pdf"
 
-    paragraph_sample_style = None
+    logger = getLogger(__name__)
+    paragraph_sample_style = getSampleStyleSheet()
 
     def __init__(self):
         """
         コンストラクタ
         """
+        # log出力設定
+        self.logger.setLevel(DEBUG)
+        formatter = Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        # ファイルへ出力するハンドラーを定義
+        fh = FileHandler(filename='./logs/logging.log', encoding='utf-8')
+        fh.setLevel(DEBUG)
+        fh.setFormatter(formatter)
+        # rootロガーにハンドラーを登録
+        self.logger.addHandler(fh)
+
         # フォント登録
         pdfmetrics.registerFont(cidfonts.UnicodeCIDFont("HeiseiKakuGo-W5"))
+
         # ParagraphStyleのテンプレートを取得
-        self.paragraph_sample_style = getSampleStyleSheet()
+        # self.paragraph_sample_style = getSampleStyleSheet()
         self.paragraph_sample_style["Title"].fontName = "HeiseiKakuGo-W5"
         self.paragraph_sample_style["Heading2"].fontName = "HeiseiKakuGo-W5"
         self.paragraph_sample_style["Heading3"].fontName = "HeiseiKakuGo-W5"
@@ -51,6 +65,8 @@ class GeneratePdf:
         # 入力パスの正当性確認
         if not self.validate_input_path(argv):
             return
+        # self.logger.debug("PDF生成開始")
+        self.logger.debug("PDF生成開始")
 
         # 指定フォルダ内の画像を読み込む
         photo_files = self.collect_photo_files_path(argv[1])
@@ -77,6 +93,10 @@ class GeneratePdf:
 
         # テーブル情報を描画
         self.create_table_info(doc, contents, photo_exifs)
+
+        # 使用カメラ割合の棒グラフを描画
+        self.create_camera_bar_chart(doc, contents, photo_exifs)
+        contents.append(Spacer(1, 12))
 
         # 使用レンズ割合の棒グラフを描画
         self.create_lens_bar_chart(doc, contents, photo_exifs)
@@ -211,6 +231,33 @@ class GeneratePdf:
         ])
         contents.append(table)
 
+    def create_camera_bar_chart(self, doc: SimpleDocTemplate, contents: list, photo_exifs: dict):
+        """
+        使用カメラ回数を示す棒グラフを作成するメソッド
+        Args:
+            doc: PDFドキュメント
+            contents: PDFコンテンツ
+            photo_exifs: 画像EXIF情報リスト
+        """
+        header_style = self.paragraph_sample_style["Heading2"]
+        header_style.underlineWidth = 1
+        header = Paragraph(
+            "<u>使用カメラ回数</u>",
+            style=header_style,
+        )
+        contents.append(header)
+        contents.append(Spacer(1, 4))
+
+        generate_camera_bar_chart = GenerateCameraBarChart()
+        img = generate_camera_bar_chart.sub_routine(photo_exifs)
+        camera_bar_chart_image = Image(
+            img,
+            width=doc.pagesize[0] - 20*mm,
+            height=doc.pagesize[1] - 20*mm,
+            kind="proportional",
+        )
+        contents.append(camera_bar_chart_image)
+
     def create_lens_bar_chart(self, doc: SimpleDocTemplate, contents: list, photo_exifs: dict):
         """
         使用レンズ回数を示す棒グラフを作成するメソッド
@@ -235,8 +282,6 @@ class GeneratePdf:
             width=doc.pagesize[0] - 20*mm,
             height=doc.pagesize[1] - 20*mm,
             kind="proportional",
-            # hAlign="CENTER",
-            # vAlign="MIDDLE",
         )
         contents.append(lens_bar_chart_image)
 

@@ -4,7 +4,7 @@ from matplotlib import pyplot
 import matplotlib_fontja
 
 
-class GenerateLensBarChart:
+class GenerateCameraBarChart:
     a4 = (8.27, 11.69)  # A4サイズのインチ数
     mm = 0.0393701  # インチからmmへの変換係数
 
@@ -23,53 +23,55 @@ class GenerateLensBarChart:
 
     def sub_routine(self, photo_exifs: list[dict]) -> io.BytesIO:
         """
-        使用レンズの割合を棒グラフで作成するメソッド
+        使用カメラの割合を棒グラフで作成するメソッド
         """
-        lens_count_dict = self.extract_lens_info(photo_exifs)
-        return self.create_lens_bar_chart(lens_count_dict)
+        camera_count_dict = self.extract_camera_info(photo_exifs)
+        return self.create_camera_bar_chart(camera_count_dict)
 
-    def extract_lens_info(self, photo_exifs: list[dict]) -> dict:
+    def extract_camera_info(self, photo_exifs: list[dict]) -> dict:
         """
-        使用レンズの情報を抽出するメソッド
+        使用カメラの情報を抽出するメソッド
         Args:
             photo_exifs: 画像EXIF情報リスト
         Returns:
-            dict: レンズ名と出現回数dict
+            dict: カメラ名と出現回数dict
         """
-        # 使用レンズを抽出
-        lens_infos = []
+        # 使用カメラを抽出
+        camera_infos = []
         for image in photo_exifs:
-            if "EXIF LensModel" in image:
-                lens_infos.append(str(image["EXIF LensModel"]).strip())
+            if "Image Model" in image and "Image Make" in image:
+                camera_infos.append(
+                    f"{str(image['Image Make']).strip()}_{str(image['Image Model']).strip()}")
 
-        # レンズ名をキーに出現回数をカウント
-        lens_count_dict = {}
-        for lens in lens_infos:
-            lens_name = str(lens)
-            if lens_name in lens_count_dict:
-                lens_count_dict[lens_name] += 1
+        # カメラ名をキーに出現回数をカウント
+        camera_count_dict = {}
+        for camera in camera_infos:
+            camera_name = str(camera)
+            if camera_name in camera_count_dict:
+                camera_count_dict[camera_name] += 1
             else:
-                lens_count_dict[lens_name] = 1
+                camera_count_dict[camera_name] = 1
+        self.logger.debug(f"カメラ情報: {camera_count_dict}")
 
         # 上位5位まではそのまま、その他はまとめる
-        lens_chart_dict = dict(
-            sorted(lens_count_dict.items(), key=lambda x: x[1], reverse=True)[:5])
+        camera_chart_dict = dict(
+            sorted(camera_count_dict.items(), key=lambda x: x[1], reverse=True)[:5])
         others_sum = sum(
-            value for key, value in lens_count_dict.items() if key not in lens_chart_dict)
-        lens_chart_dict['その他'] = others_sum  # その他を追加
-        return lens_chart_dict
+            value for key, value in camera_count_dict.items() if key not in camera_chart_dict)
+        camera_chart_dict['その他'] = others_sum  # その他を追加
+        return camera_chart_dict
 
-    def create_lens_bar_chart(self, lens_count_dict: dict) -> io.BytesIO:
+    def create_camera_bar_chart(self, camera_count_dict: dict) -> io.BytesIO:
         """
-        レンズ使用回数を棒グラフで表示するメソッド
+        カメラ使用回数を棒グラフで表示するメソッド
         Args:
-            lens_count_dict: レンズ名と出現回数dict
+            camera_count_dict: カメラ名と出現回数dict
         Return:
             buf: 画像データ
         """
         # 棒グラフのデータを準備
-        labels = list(lens_count_dict.keys())
-        data = list(lens_count_dict.values())
+        labels = list(camera_count_dict.keys())
+        data = list(camera_count_dict.values())
         bar_colors = ["tab:red", "tab:blue", "tab:green",
                       "tab:orange", "tab:purple", "tab:brown"]
 
