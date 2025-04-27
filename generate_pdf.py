@@ -6,7 +6,7 @@ from pprint import pprint
 from typing import Tuple
 
 from fractions import Fraction
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Image, Spacer
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Image, Spacer, Table
 from reportlab.lib.pagesizes import A4, portrait
 from reportlab.lib.units import mm
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -64,13 +64,9 @@ class GeneratePdf:
         # PDFテンプレートを作成
         doc, contents = self.initialize_pdf_template()
 
-        # # ParagraphStyleのテンプレートを取得
-        # paragraph_sample_style = getSampleStyleSheet()
-
         # PDFタイトルを描画
-        #TODO cloneした方がよいか？
+        # TODO cloneした方がよいか？
         paragraph_title = self.paragraph_sample_style["Title"]
-        # paragraph_title.fontName = "HeiseiKakuGo-W5"
         paragraph_title.underlineWidth = 1
         title = Paragraph(
             "<u>撮影スタイルレポート</u>",
@@ -78,6 +74,9 @@ class GeneratePdf:
         )
         contents.append(title)
         contents.append(Spacer(1, 12))
+
+        # テーブル情報を描画
+        self.create_table_info(doc, contents, photo_exifs)
 
         # 使用レンズ割合の棒グラフを描画
         self.create_lens_bar_chart(doc, contents, photo_exifs)
@@ -165,10 +164,59 @@ class GeneratePdf:
         contents = []
         return doc, contents
 
+    def create_table_info(self, doc: SimpleDocTemplate, contents: list, photo_exifs: dict):
+        """
+        テーブル情報を描画するメソッド
+        Args:
+            doc: PDFドキュメント
+            contents: PDFコンテンツ
+            photo_exifs: 画像EXIF情報リスト
+        """
+        # 撮影期間を取得
+        period_start = None
+        period_end = None
+        for image in photo_exifs:
+            if "EXIF DateTimeOriginal" in image:
+                date_str = str(image["EXIF DateTimeOriginal"])
+                date = datetime.datetime.strptime(
+                    date_str, "%Y:%m:%d %H:%M:%S")
+                if period_start is None:
+                    period_start = date
+                else:
+                    if period_start > date:
+                        period_start = date
+                if period_end is None:
+                    period_end = date
+                else:
+                    if period_end < date:
+                        period_end = date
+        period_start_str = period_start.strftime("%Y/%m/%d")
+        period_end_str = period_end.strftime("%Y/%m/%d")
+
+        data = [
+            ["レポート対象画像", len(photo_exifs), "レポート対象期間",
+             f"{period_start_str}～{period_end_str}"],
+        ]
+        table = Table(data, colWidths=[30*mm, 40*mm, 30*mm, 60*mm])
+        table.setStyle([
+            ("GRID", (0, 0), (-1, -1), 0.5, "black"),
+            ("BACKGROUND", (0, 0), (0, 0), "palegreen"),
+            ("BACKGROUND", (1, 0), (1, 0), "white"),
+            ("BACKGROUND", (2, 0), (2, 0), "palegreen"),
+            ("BACKGROUND", (3, 0), (3, 0), "white"),
+            ("TEXTCOLOR", (0, 0), (-1, -1), "black"),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("FONTNAME", (0, 0), (-1, -1), "HeiseiKakuGo-W5"),
+            ("FONTSIZE", (0, 0), (-1, -1), 10),
+        ])
+        contents.append(table)
+
     def create_lens_bar_chart(self, doc: SimpleDocTemplate, contents: list, photo_exifs: dict):
         """
         使用レンズ回数を示す棒グラフを作成するメソッド
         Args:
+            doc: PDFドキュメント
+            contents: PDFコンテンツ
             photo_exifs: 画像EXIF情報リスト
         """
         header_style = self.paragraph_sample_style["Heading2"]

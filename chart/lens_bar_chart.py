@@ -64,10 +64,11 @@ class GenerateLensBarChart:
             figsize=(self.a4[0] - (40*self.mm), (self.a4[1] - (40*self.mm))/5), dpi=350)
 
         bar = ax.barh(labels, data, color=bar_colors, zorder=2)
+        # バー内部のラベル色を白に変更し、最前面に配置
         ax.bar_label(bar, color="white", label_type="center", fontsize=10, zorder=3)
-        # ax.legend(title="レンズ名")
-
-        # グリッド線を有効
+        # 目盛りラベル（レンズ名）のフォントサイズを変更
+        ax.tick_params(axis="y", labelsize=8)
+        # グリッド線を有効にし、最背面に配置
         ax.grid(axis='x', linestyle='--', zorder=0, alpha=0.5)
         # y軸を反転
         ax.invert_yaxis()
