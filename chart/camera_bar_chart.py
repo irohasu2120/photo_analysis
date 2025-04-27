@@ -25,8 +25,8 @@ class GenerateCameraBarChart:
         """
         使用カメラの割合を棒グラフで作成するメソッド
         """
-        camera_count_dict = self.extract_camera_info(photo_exifs)
-        return self.create_camera_bar_chart(camera_count_dict)
+        camera_chart_dict = self.extract_camera_info(photo_exifs)
+        return self.create_camera_bar_chart(camera_chart_dict)
 
     def extract_camera_info(self, photo_exifs: list[dict]) -> dict:
         """

@@ -16,6 +16,7 @@ import exifread
 import numpy as np
 
 from chart.camera_bar_chart import GenerateCameraBarChart
+from chart.f_and_focal_length_scatter_chart import GenerateFAndFocalLengthScatterChart
 from chart.lens_bar_chart import GenerateLensBarChart
 
 
@@ -100,6 +101,10 @@ class GeneratePdf:
 
         # 使用レンズ割合の棒グラフを描画
         self.create_lens_bar_chart(doc, contents, photo_exifs)
+        contents.append(Spacer(1, 12))
+
+        # F値と焦点距離の散布図を描画
+        self.create_f_and_focal_length_scatter_chart(doc, contents, photo_exifs)
         contents.append(Spacer(1, 12))
 
         # PDF生成
@@ -285,6 +290,32 @@ class GeneratePdf:
         )
         contents.append(lens_bar_chart_image)
 
+    def create_f_and_focal_length_scatter_chart(self, doc: SimpleDocTemplate, contents: list, photo_exifs: dict):
+        """
+        F値と焦点距離の散布図を作成するメソッド
+        Args:
+            doc: PDFドキュメント
+            contents: PDFコンテンツ
+            photo_exifs: 画像EXIF情報リスト
+        """
+        header_style = self.paragraph_sample_style["Heading2"]
+        header_style.underlineWidth = 1
+        header = Paragraph(
+            "<u>F値と焦点距離(35mm換算)の散布図</u>",
+            style=header_style,
+        )
+        contents.append(header)
+        contents.append(Spacer(1, 4))
+
+        generate_f_and_focal_length_scatter_chart = GenerateFAndFocalLengthScatterChart()
+        img = generate_f_and_focal_length_scatter_chart.sub_routine(photo_exifs)
+        f_and_focal_length_scatter_chart_image = Image(
+            img,
+            width=doc.pagesize[0] - 20*mm,
+            height=doc.pagesize[1] - 20*mm,
+            kind="proportional",
+        )
+        contents.append(f_and_focal_length_scatter_chart_image)
 
 if __name__ == "__main__":
     generate_pdf = GeneratePdf()

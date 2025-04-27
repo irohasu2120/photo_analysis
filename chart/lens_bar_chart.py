@@ -11,6 +11,9 @@ class GenerateLensBarChart:
     logger = getLogger(__name__)
 
     def __init__(self):
+        """
+        コンストラクタ
+        """
         # log出力設定
         self.logger.setLevel(DEBUG)
         formatter = Formatter('%(asctime)s - %(levelname)s - %(message)s')
