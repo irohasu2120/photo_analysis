@@ -51,7 +51,6 @@ class GenerateCameraBarChart:
                 camera_count_dict[camera_name] += 1
             else:
                 camera_count_dict[camera_name] = 1
-        self.logger.debug(f"カメラ情報: {camera_count_dict}")
 
         # 上位5位まではそのまま、その他はまとめる
         camera_chart_dict = dict(

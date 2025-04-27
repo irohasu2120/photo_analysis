@@ -1,14 +1,16 @@
 from logging import getLogger, INFO, DEBUG, Formatter, FileHandler
 import io
 from matplotlib import pyplot
+from matplotlib.ticker import FixedLocator, MultipleLocator
 import matplotlib_fontja
+
 
 class GenerateFAndFocalLengthScatterChart:
     a4 = (8.27, 11.69)  # A4サイズのインチ数
     mm = 0.0393701  # インチからmmへの変換係数
-    
+
     logger = getLogger(__name__)
-    
+
     def __init__(self):
         """
         コンストラクタ
@@ -27,7 +29,8 @@ class GenerateFAndFocalLengthScatterChart:
         """
         F値と焦点距離の関係を三府図グラフで作成するメソッド
         """
-        f_and_focal_length_infos = self.extract_f_and_focal_length_info(photo_exifs)
+        f_and_focal_length_infos = self.extract_f_and_focal_length_info(
+            photo_exifs)
         return self.create_f_and_focal_length_scatter_chart(f_and_focal_length_infos)
 
     def extract_f_and_focal_length_info(self, photo_exifs: list[dict]) -> dict:
@@ -66,6 +69,13 @@ class GenerateFAndFocalLengthScatterChart:
         ax.grid(True)
         ax.set_xlabel("F値")
         ax.set_ylabel("焦点距離 (35mm換算)")
+
+        # x_labels = [1.0,1.1,1.2,1.4,1.6,1.8,2,2.2,2.5,2.8,3.2,3.5,4,4.5,5.0,5.6,6.3,7.1,8,9,10,11,13,14,16,18,20,22,25,29,32]# 1/3段ごと
+        x_labels = [1.0, 2, 2.8, 4, 5.6, 8, 11, 16, 22, 32]  # 間引き
+
+        ax.set_xticks(x_labels)
+        pyplot.xticks(rotation=90)
+        ax.set_xticklabels(x_labels)
 
         # 画像出力
         buf = io.BytesIO()

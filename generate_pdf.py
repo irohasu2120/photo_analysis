@@ -66,8 +66,6 @@ class GeneratePdf:
         # 入力パスの正当性確認
         if not self.validate_input_path(argv):
             return
-        # self.logger.debug("PDF生成開始")
-        self.logger.debug("PDF生成開始")
 
         # 指定フォルダ内の画像を読み込む
         photo_files = self.collect_photo_files_path(argv[1])
@@ -104,7 +102,9 @@ class GeneratePdf:
         contents.append(Spacer(1, 12))
 
         # F値と焦点距離の散布図を描画
-        self.create_f_and_focal_length_scatter_chart(doc, contents, photo_exifs)
+        # TODO 広角、標準、望遠で分けた方が良さそう
+        self.create_f_and_focal_length_scatter_chart(
+            doc, contents, photo_exifs)
         contents.append(Spacer(1, 12))
 
         # PDF生成
@@ -301,14 +301,15 @@ class GeneratePdf:
         header_style = self.paragraph_sample_style["Heading2"]
         header_style.underlineWidth = 1
         header = Paragraph(
-            "<u>F値と焦点距離(35mm換算)の散布図</u>",
+            "<u>F値と焦点距離(35mm換算)組み合わせの散布図</u>",
             style=header_style,
         )
         contents.append(header)
         contents.append(Spacer(1, 4))
 
         generate_f_and_focal_length_scatter_chart = GenerateFAndFocalLengthScatterChart()
-        img = generate_f_and_focal_length_scatter_chart.sub_routine(photo_exifs)
+        img = generate_f_and_focal_length_scatter_chart.sub_routine(
+            photo_exifs)
         f_and_focal_length_scatter_chart_image = Image(
             img,
             width=doc.pagesize[0] - 20*mm,
@@ -316,6 +317,7 @@ class GeneratePdf:
             kind="proportional",
         )
         contents.append(f_and_focal_length_scatter_chart_image)
+
 
 if __name__ == "__main__":
     generate_pdf = GeneratePdf()
